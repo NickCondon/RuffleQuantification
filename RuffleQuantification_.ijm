@@ -1,7 +1,7 @@
 
 //	MIT License
 
-//	Copyright (c) 2018 Nicholas Condon n.condon@uq.edu.au
+//	Copyright (c) 2019 Nicholas Condon n.condon@uq.edu.au
 
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ scripttitle="Ruffle Quantification";
 version="1.0";
 date="26/08/2019";
 description="This automated script measures dorsal ruffle area and intensity from Z-stack (3D) images and is written in the ImageJ macro language. "
-+"Regions of dorsal ruffling are determined as being from the 'top half of the cell' which is largest cross-sectional midpoint of the nucleous. <br><br>"
++"Regions of dorsal ruffling are determined as being from the 'top half of the cell' which is largest cross-sectional midpoint of the nucleus. <br><br>"
 +"This script requires 2-channel images as the file input and should be within a single directory, with Actin labelling in Channel 1 and nuclei labelling in Channel 2. The script will request the file extension for filtering (eg. .tif). <br><br>"
 +"Images are processed automatically in a loop and stored in a newly created output folder with the script runtime appended. Output files include a log, excel spreadsheet and two image files. "
 +"The first image file is the summed (Z-projected) ruffle region merged ontop of the cell area threshold image, while the second is the thresholded area of the ruffles merged with the cell area. <br><br>"
@@ -38,13 +38,13 @@ description="This automated script measures dorsal ruffle area and intensity fro
 showMessage("Institute for Molecular Biosciences ImageJ Script", "<html>" 
     +"<h1><font size=6 color=Teal>ACRF: Cancer Biology Imaging Facility</h1>
     +"<h1><font size=5 color=Purple><i>The University of Queensland</i></h1>
-    +"<h4><a href=http://imb.uq.edu.au/Microscopy/>ACRF: Cancer Biology Imaging Facility</a><\h4>"
+    +"<h4><a href=http://imb.uq.edu.au/Microscopy/>ACRF: Cancer Biology Imaging Facility</a></h4>"
     +"<h1><font color=black>ImageJ Script Macro: "+scripttitle+"</h1> "
     +"<p1>Version: "+version+" ("+date+")</p1>"
-    +"<H2><font size=3>Created by Nicholas Condon</H2>"	
+    +"<H2><font size=3>Created by Dr Nicholas Condon</H2>"	
     +"<p1><font size=2> contact n.condon@uq.edu.au \n </p1>" 
     +"<P4><font size=2> Available for use/modification/sharing under the "+"<p4><a href=https://opensource.org/licenses/MIT/>MIT License</a><\h4> </P4>"
-    +"<h3>   <\h3>"    
+//    +"<h3>   <\h3>"    
     +"<p1><font size=3 \b i>"+description+"</p1>"
    	+"<h1><font size=2> </h1>"  
 	+"<h0><font size=5> </h0>"
@@ -85,6 +85,8 @@ ext = ".tif";																						//Variable for file name extension
 
 start = getTime();																					//Creates an internal timer
 
+
+
 print("");
 print("**** Event Logger ****");																	//Writes to log window header for Event Logger section
 
@@ -107,16 +109,16 @@ setBatchMode(1);																					//Turns on background mode
 
 run("Duplicate...", "title=nuc duplicate channels=2");												//Duplicates the nuclei channel (channel 2)
 run("Median...", "radius=2 stack");																	//Runs a median filter
-setAutoThreshold("Default dark");																	//Sets Auto theshold using "Default" algorithm
+setAutoThreshold("Otsu dark");
 run("Convert to Mask", "method=Default background=Dark black");										//Converts the threshold selection to a mask
 run("Close-", "stack");																				//Closes any open areas of the resultant threshold
 run("Fill Holes", "stack");																			//Fills any holes within the resultant threshold
-
+run("Clear Results");																				//Clears any results in the results window
 AreaA = newArray(nSlices);																			//Creates an array to place measurements of each slices nuclei area into
 for (i=0;i<nSlices;i++){																			//Loop for each slide
 	setSlice(i+1);																					//Sets the slice as the loop number plus 1 (base0)
 	run("Measure");																					//Measures the mean intensity of nuclei for the given slice
-	Apix = (getResult("Mean",0)*getResult("Area",0)/255);											//Calcultes the number of pixels based off of the average intensity by the area
+	Apix = (getResult("Mean",0)*getResult("Area",0)/255);											//Calculates the number of pixels based off of the average intensity by the area
 	AreaA[i] = Apix;																				//Prints the number of 'positive' nuclei pixels into the array 
 	run("Clear Results");																			//Clears any results in the results window
 }
@@ -129,10 +131,10 @@ Apix=0;k=0;																							//Defines variables for finding midpoint slice
 for (k=0; k<nSlices && max!=Apix; k++){																//Loop to query each nuclei area until it matches the maximum found above
 	setSlice(k+1);																					//Sets the slice as the loop number plus 1 (base0)
 	run("Measure");																					//Measures the mean intensity of nuclei for the given slice
-	Apix = (getResult("Mean",0)*getResult("Area",0)/255);											//Calcultes the number of pixels based off of the average intensity by the area
+	Apix = (getResult("Mean",0)*getResult("Area",0)/255);											//Calculates the number of pixels based off of the average intensity by the area
 	run("Clear Results");																			//Clears any results in the results window
 }
-print("Maxium nuclei area = Slice: "+k);															//Writes to log window the Slice number with the largest nuclei area (midpoint)
+print("Maxium nuclei area = Slice: "+k+" (of "+totSlices+" slices)");								//Writes to log window the Slice number with the largest nuclei area (midpoint)
 midPoint = k;																						//Defines mid-point variable
 setBatchMode(0);																					//Turns off background mode
 
@@ -143,11 +145,11 @@ setAutoThreshold("Moments dark");																	//Detects nuclei using the "Mo
 run("Convert to Mask");																				//Converts the threshold into a mask
 run("Analyze Particles...", "size=10-Infinity show=Masks summarize");								//Finds the number of nuclei using Analyse particles tool
 selectWindow("Summary");																			//Selects the Summary window
-IJ.renameResults("Results");																		//Converts the sumary window to a Results window
+IJ.renameResults("Results");																		//Converts the summary window to a Results window
 numNuc = getResult("Count", 0);																		//Collects the count of nuclei and adds to variable numNuc
 print("The number of Nuclei Found = "+ numNuc);														//Writes to log window the number of nuclei found
 run("Clear Results");																				//Clears any results in the results window
-
+saveAs("tiff", resultsDir+windowtitlenoext+"_Merged-Threshed-Nuc.tif");  							//Saves the resultant merged image into results directory with appended description
 
 selectWindow(windowtitle);																			//Selects original file window
 run("Duplicate...", "title=actin duplicate channels=1");											//Duplicates Channel 1 calling it actin
@@ -155,7 +157,7 @@ run("Z Project...", "stop="+midPoint+" projection=[Max Intensity]");								//Ru
 rename("Bottom");																					//Renames image "Bottom"
 run("Duplicate...", "title=ThreshBottom");															//Creates a duplicate of "Bottom"
 run("Median...", "radius=2");																		//Runs a median filter
-setAutoThreshold("Triangle dark");																	//Detects base of cell uaing Triangle threshold algorithm
+setAutoThreshold("Triangle dark");																	//Detects base of cell using Triangle threshold algorithm
 //setThreshold(8, 255);
 run("Convert to Mask");																				//Converts threshold into a mask
 
@@ -170,7 +172,7 @@ run("Duplicate...", "title=CellCounter");															//Duplicates the thresho
 run("Distance Map");																				//Runs the binary command Distance Map to split touching cells
 setAutoThreshold("IJ_IsoData dark");																//Converts resultant distance map into binary
 setOption("BlackBackground", true);																	//Defines foreground/background
-run("Convert to Mask");																				//Converts the theshold into a mask
+run("Convert to Mask");																				//Converts the threshold into a mask
 run("Analyze Particles...", "size=30-Infinity show=Masks summarize");								//Counts the number of cells using analyse particles
 selectWindow("Summary");																			//Selects the Summary window
 IJ.renameResults("Results");																		//Converts the sumary window to a Results window
@@ -184,13 +186,15 @@ run("Z Project...", "start="+midPoint+" projection=[Sum Slices]");									//Run
 rename("Top");																						//Renames image "Top"
 run("Clear Results");																				//Clears any results in the results window
 run("Measure");																						//Runs the measure command
-Sumpix = getResult("Mean",0)*getResult("Area",0);													//Defines variable and calcultes number of pixels that make up the ruffle intensity (top measurement)
+Sumpix = getResult("Mean",0)*getResult("Area",0);													//Defines variable and calculates number of pixels that make up the ruffle intensity (top measurement)
 print("Sum intensity of pixels = "+Sumpix);															//Writes to the log window the sum pixel intensity of ruffles
 
 
 run("Duplicate...", "title=ThreshTop");																//Duplicates the dorsal image and calls it "ThreshTop"
 setAutoThreshold("Moments dark");																	//Detects ruffle regions based on Moments threshold algorithm
 run("Convert to Mask");																				//Converts threshold into a mask
+saveAs("tiff", resultsDir+windowtitlenoext+"_Merged-Threshed-ruffles.tif");  						//Saves the resultant merged image into results directory with appended description
+rename("ThreshTop");
 run("Clear Results");																				//Clears any results in the results window
 run("Measure");																						//Runs the measure command
 TopArea = (getResult("Mean",0)*getResult("Area",0)/255);											//Defines variable and calcultes number of pixels that make up the ruffle area (top measurement)
@@ -218,13 +222,15 @@ selectWindow("Top");																				//Selects image called Top (Sum projecti
 run("Green");																						//Runs green LUT
 run("Merge Channels...", "c1=Bottom c2=Top create keep");											//Merges these to images into a single image
 rename("Merge_Orig");																				//Renames the image
-saveAs("tiff", resultsDir+windowtitlenoext+"_Merged-Summed-Ruffles.tif");  							//Saves the resultant merged image into resutls directory with appeneded discription
+run("RGB Color");																					//Flattens output image as RGB
+run("Enhance Contrast", "saturated=0.2");															//Enhances displayed brightness & contrast
+saveAs("tiff", resultsDir+windowtitlenoext+"_Merged-Summed-Ruffles.tif");  							//Saves the resultant merged image into resutls directory with appended description
 
 selectWindow("ThreshTop");																			//Selects image called ThreshTop (Thresholded iamge of ruffles)
 run("Green");																						//Runs the green LUT
 run("Merge Channels...", "c1=ThreshBottom c2=ThreshTop create keep");								//Merges these to images into a single image
 rename("Merge_Thresh");																				//Renames the image
-saveAs("tiff", resultsDir+windowtitlenoext+"_Merged-Threshed-Area.tif");  							//Saves the resultant merged image into resutls directory with appeneded discription
+saveAs("tiff", resultsDir+windowtitlenoext+"_Merged-Threshed-Area.tif");  							//Saves the resultant merged image into results directory with appended description
 
 while (nImages>0){close();}																			//Loop for closing all other image windows
 }																									//Ends file list opening loop
