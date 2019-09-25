@@ -134,6 +134,8 @@ for (k=0; k<nSlices && max!=Apix; k++){																//Loop to query each nucl
 	Apix = (getResult("Mean",0)*getResult("Area",0)/255);											//Calculates the number of pixels based off of the average intensity by the area
 	run("Clear Results");																			//Clears any results in the results window
 }
+
+if (k==slices){k= (nSlices/2);}
 print("Maxium nuclei area = Slice: "+k+" (of "+totSlices+" slices)");								//Writes to log window the Slice number with the largest nuclei area (midpoint)
 midPoint = k;																						//Defines mid-point variable
 setBatchMode(0);																					//Turns off background mode
@@ -191,6 +193,7 @@ print("Sum intensity of pixels = "+Sumpix);															//Writes to the log wi
 
 
 run("Duplicate...", "title=ThreshTop");																//Duplicates the dorsal image and calls it "ThreshTop"
+run("Subtract Background...", "rolling=20");														//Removes out of focus light for threshold
 setAutoThreshold("Moments dark");																	//Detects ruffle regions based on Moments threshold algorithm
 run("Convert to Mask");																				//Converts threshold into a mask
 saveAs("tiff", resultsDir+windowtitlenoext+"_Merged-Threshed-ruffles.tif");  						//Saves the resultant merged image into results directory with appended description
