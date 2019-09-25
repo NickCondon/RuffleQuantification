@@ -70,19 +70,20 @@ print("**** Parameters ****");																		//Creates header for log window
 print("Working Directory Location: "+path);															//Writes to log window working directory location
 
 summaryFile = File.open(resultsDir+"Quantification_Outputs_"+year+"-"+month+"-"+day+"_at_"+hour+"."+min+".xls");	//Creates Excel output file with headers below
-print(summaryFile,"ImageId \t Number of Cells \t Number of Nuclei \t Middle Slice#  \t Total Slice# \t Total Cell Area  \t Sum Intensity (F-Actin) \t Total Area Ruffles (Top F-Actin) \t Ratio Top:Bottom (Area) \t Ratio Sum Intensity: Cell Area \t Normalised Ratio Top:Bottom \t Normalise Sum Intensity:Area \n" );
+print(summaryFile,"ImageId \t Est. Number of Cells \t Number of Nuclei \t Middle Slice#  \t Total Slice# \t Total Cell Area  \t Sum Intensity (F-Actin) \t Total Area Ruffles (Top F-Actin) \t Ratio Top:Bottom (Area) \t Ratio Sum Intensity: Cell Area \t Normalised Ratio Top:Bottom \t Normalised Sum Intensity:Area \n" );
 
-
+offset = 0;																							//Variable for midpoint offset
 ext = ".tif";																						//Variable for file name extension
   Dialog.create("Select Filename filter");															//File name filter dialog
   	Dialog.addString("File Extension:", ext);														//Dialog for user input of file extension
  	Dialog.addMessage("(For example .czi  .lsm  .nd2  .lif  .ims)");								//Example file extensions to remind user
   	Dialog.addMessage(" ");																			//Spacing
+ 	Dialog.addNumber("Nuclei Mid-point Offset", offset);											//Dialog for user input of an offset for the midpoint number
  	Dialog.show();																					//Shows dialog
 	ext = Dialog.getString();																		//Updates extension variable with users input
 	print("File extension: "+ext);																	//Writes to log window chosen file extension
-
-
+	offset = Dialog.getNumber();																	//Updates offset variable with user input
+	print("Mid-Point offset = "+offset);															//Writes to log window chosen offset
 start = getTime();																					//Creates an internal timer
 
 
@@ -135,9 +136,12 @@ for (k=0; k<nSlices && max!=Apix; k++){																//Loop to query each nucl
 	run("Clear Results");																			//Clears any results in the results window
 }
 
-if (k==slices){k= (nSlices/2);}
+if (k==slices){k= (nSlices/2);print("Failed to find Midpoint, set midpoint to middle slice");}		//If failed to find midpoint sets middle slice as midpoint
 print("Maxium nuclei area = Slice: "+k+" (of "+totSlices+" slices)");								//Writes to log window the Slice number with the largest nuclei area (midpoint)
-midPoint = k;																						//Defines mid-point variable
+midPoint = (k+offset);																				//Defines mid-point variable
+if (midPoint<1 || midPoint>nSlices){midPoint = 1;print("Warning Midpoint+Offset is out of range, Midpoint has been set to 1");}		//Checks offset doesnt set a negative slice number
+print("Mid-point Slice used = : "+midPoint);														//Reports updated Midpoint
+
 setBatchMode(0);																					//Turns off background mode
 
 
@@ -145,7 +149,7 @@ selectWindow("nuc");																				//Selects nuclei image stack
 run("Z Project...", "projection=[Sum Slices]");														//Runs a SUM Z-projection
 setAutoThreshold("Moments dark");																	//Detects nuclei using the "Moments" threshold algorithm
 run("Convert to Mask");																				//Converts the threshold into a mask
-run("Analyze Particles...", "size=10-Infinity show=Masks summarize");								//Finds the number of nuclei using Analyse particles tool
+run("Analyze Particles...", "size=10-Infinity show=Masks summarize exclude");						//Finds the number of nuclei using Analyse particles tool
 selectWindow("Summary");																			//Selects the Summary window
 IJ.renameResults("Results");																		//Converts the summary window to a Results window
 numNuc = getResult("Count", 0);																		//Collects the count of nuclei and adds to variable numNuc
@@ -209,10 +213,10 @@ print("The Ratio of Top:Bottom areas = "+RatioArea);												//Writes to log 
 RatioInt = Sumpix/CellAPix;																			//Calculates the ratio of top intensity to bottom area (Summed ruffle intensity to cell area)
 print("The Ratio of Sum Intensity Top:Bottom area = "+RatioInt);									//Writes to log window the ratio of top summed intensity to bottom area
 
-normRatioArea = (TopArea/CellAPix)/numCells;														//Normalises the ratio area by the number of cells
-print("The Normalised Ratio of Top:Bottom areas = "+normRatioArea);									//Writes to log window the normalised ruffle area
-normRatioInt = (Sumpix/CellAPix)/numCells;															//Normalises the ratio intensity by the number of cells
-print("The Normalised Ratio of Sum Intensity Top:Bottom area = "+normRatioInt);						//Writes to log window the normalise ruffle intensity (sum)
+normRatioArea = (TopArea/CellAPix)/numNuc;															//Normalises the ratio area by the number of nuclei
+print("The Normalised (numNuc) Ratio of Top:Bottom areas = "+normRatioArea);						//Writes to log window the normalised ruffle area
+normRatioInt = (Sumpix/CellAPix)/numNuc;															//Normalises the ratio intensity by the number of nuclei
+print("The Normalised (numNuc) Ratio of Sum Intensity Top:Bottom area = "+normRatioInt);			//Writes to log window the normalise ruffle intensity (sum)
 
 																									//Following line prints calculated variables and key results to csv output file
 print(summaryFile,windowtitle+ "\t"+numCells+"\t"+numNuc+"\t"+midPoint+"\t"+totSlices+"\t"+CellAPix+"\t"+Sumpix+"\t"+TopArea+"\t"+RatioArea+"\t"+RatioInt+"\t"+normRatioArea+"\t"+normRatioInt+"\n");
