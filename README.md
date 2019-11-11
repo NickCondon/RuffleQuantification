@@ -20,6 +20,10 @@ This script takes two colour Z-stack images (Ch1 = Phalloidin/Actin; Ch2 = Nucle
 
 Using Bio-Formats and FIJI the script can be run on any image type, and is batch processable on an entire directory of multiple images. The script outputs mask images as well as an .xls file containing the quantification outputs ready for statistical analysis.
 
+Installing the Script
+-----
+There are two main ways to get a copy of this script running in your instance of FIJI. The first is to download the entire folder (or simply the .ijm file) to your computer and place it into the Plugins Folder in your FIJI application. The second option is to open the .ijm file from within the web browser and copy the script text. Open an instance of FIJI and create a new script (File > New > Script) and paste the text into here. (Note you will need to set the language to IJ1_Macro). You can now save this locally on your computer.
+
 
 Running the script
 -----
