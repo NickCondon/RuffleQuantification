@@ -86,7 +86,7 @@ ext = ".tif";																						//Variable for file name extension
 	print("Mid-Point offset = "+offset);															//Writes to log window chosen offset
 start = getTime();																					//Creates an internal timer
 
-
+run("Set Measurements...", "area mean standard min median display redirect=None decimal=3");		//Sets the required measurements
 
 print("");
 print("**** Event Logger ****");																	//Writes to log window header for Event Logger section
